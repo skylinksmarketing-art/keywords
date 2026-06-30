@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search Keywords Report — Sky Links Capital</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+  .header { background: #1a3c5e; color: white; padding: 28px 40px; }
+  .header h1 { font-size: 24px; font-weight: bold; }
+  .header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  .container { max-width: 1150px; margin: 0 auto; padding: 28px 24px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .card { background: white; border-radius: 10px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .card-value { font-size: 24px; font-weight: bold; color: #1a3c5e; }
+  .card-sub { font-size: 12px; color: #aaa; margin-top: 3px; }
+
+  .section { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 14px 20px; border-bottom: 1px solid #f0f0f0; }
+  .filter-row label { font-size: 12px; color: #666; }
+  .filter-row select, .filter-row input { font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 1px solid #ddd; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #f7f9fb; color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; padding: 12px 14px; text-align: left; border-bottom: 1px solid #eee; cursor: pointer; user-select: none; white-space: nowrap; }
+  thead th:hover { color: #1a3c5e; }
+  tbody tr { border-bottom: 1px solid #f5f5f5; }
+  tbody tr:hover { background: #fafcff; }
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  tbody tr:last-child { border-bottom: none; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+  .badge-exact { background: #e8f0fe; color: #1a56c4; }
+  .badge-phrase { background: #e6f4ea; color: #1e7e34; }
+
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar-bg { flex: 1; background: #f0f0f0; border-radius: 4px; height: 7px; min-width: 50px; }
+  .bar-fill { height: 7px; border-radius: 4px; }
+  .bar-val { font-size: 12px; color: #555; min-width: 56px; text-align: right; }
+
+  .ctr-high { color: #1e7e34; font-weight: bold; }
+  .ctr-mid { color: #e67e00; font-weight: bold; }
+  .ctr-low { color: #888; }
+
+  .footer-note { padding: 12px 20px; background: #f7f9fb; border-top: 1px solid #eee; font-size: 12px; color: #666; }
+
+  .match-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #666; align-items: center; }
+
+  @media (max-width: 600px) {
+    .header { padding: 20px; }
+    .container { padding: 16px 12px; }
+    table { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔍 Search Keywords Report</h1>
+  <p>Sky Links Capital &nbsp;|&nbsp; June 2026 (Jun 1 – Jun 30) &nbsp;|&nbsp; Google Search Network</p>
+</div>
+
+<div class="container">
+
+  <div class="cards" id="summary-cards"></div>
+
+  <div class="section">
+    <div class="filter-row">
+      <label>Match Type:</label>
+      <select id="matchFilter" onchange="render()">
+        <option value="all">All</option>
+        <option value="Exact">Exact</option>
+        <option value="Phrase">Phrase</option>
+      </select>
+      <label>Show:</label>
+      <select id="clickFilter" onchange="render()">
+        <option value="all">All keywords</option>
+        <option value="active">Has spend</option>
+        <option value="conv">Has conversions</option>
+        <option value="zero">No spend</option>
+      </select>
+      <input type="text" id="searchBox" placeholder="Search keyword..." oninput="render()" style="margin-left:auto;" />
+      <div class="match-legend">
+        <span class="badge badge-exact">Exact</span> exact match &nbsp;
+        <span class="badge badge-phrase">Phrase</span> phrase match
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('kw')">Keyword</th>
+          <th onclick="sortBy('match')">Match Type</th>
+          <th onclick="sortBy('impr')">Impressions</th>
+          <th onclick="sortBy('clicks')">Clicks</th>
+          <th onclick="sortBy('ctr')">CTR</th>
+          <th onclick="sortBy('cost')">Cost</th>
+          <th onclick="sortBy('cpc')">Avg. CPC</th>
+          <th onclick="sortBy('convRate')">Conv. Rate</th>
+          <th onclick="sortBy('conv')">Conversions</th>
+          <th onclick="sortBy('costConv')">Cost/Conv.</th>
+        </tr>
+      </thead>
+      <tbody id="kw-body"></tbody>
+    </table>
+    <div class="footer-note" id="footer-note"></div>
+  </div>
+
+</div>
+
+<script>
+const keywords = [
+  {kw:"sky links capital llc", match:"Exact", impr:4, clicks:2, ctr:0.5000, cost:38.59, cpc:19.29, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital", match:"Exact", impr:64, clicks:20, ctr:0.3125, cost:56.94, cpc:2.85, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"cma regulated forex broker uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"gold trading uae", match:"Phrase", impr:429, clicks:31, ctr:0.0723, cost:110.80, cpc:3.57, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"cma regulated forex broker uae", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"CFD broker", match:"Phrase", impr:148, clicks:2, ctr:0.0135, cost:8.31, cpc:4.16, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"xauusd trading uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital trading", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"Forex broker", match:"Phrase", impr:234, clicks:11, ctr:0.0470, cost:99.91, cpc:9.08, conv:1, convRate:0.0909, costConv:99.91},
+  {kw:"regulated broker in uae", match:"Phrase", impr:605, clicks:16, ctr:0.0264, cost:98.09, cpc:6.13, conv:1, convRate:0.0625, costConv:98.09},
+  {kw:"trading broker uae", match:"Phrase", impr:289, clicks:8, ctr:0.0277, cost:42.49, cpc:5.31, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sca regulated forex broker uae", match:"Exact", impr:1, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"gold trading dubai", match:"Phrase", impr:11, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital regulated broker", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"oil trading broker uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"crude oil trading uae", match:"Phrase", impr:13, clicks:2, ctr:0.1538, cost:5.88, cpc:2.94, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"open trading account uae", match:"Phrase", impr:10, clicks:2, ctr:0.2000, cost:19.12, cpc:9.56, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital dubai", match:"Exact", impr:2, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital dubai", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"skylinks capital llc", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sca regulated broker uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"skylinks capital", match:"Exact", impr:95, clicks:40, ctr:0.4211, cost:47.17, cpc:1.18, conv:3, convRate:0.0750, costConv:15.72},
+  {kw:"gold trading broker uae", match:"Phrase", impr:18, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital broker", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"SCA regulated broker", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital uae", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"oil trading uae", match:"Phrase", impr:23, clicks:1, ctr:0.0435, cost:3.26, cpc:3.26, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"cma regulated broker uae", match:"Exact", impr:1, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"trading account uae", match:"Phrase", impr:306, clicks:14, ctr:0.0458, cost:107.01, cpc:7.64, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"skylinks capital", match:"Phrase", impr:35, clicks:15, ctr:0.4286, cost:14.06, cpc:0.94, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"regulated forex broker in uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital llc", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital regulated broker", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"mt5 broker uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital broker", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"cma regulated broker uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"skylinks capital llc", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sca regulated broker uae", match:"Exact", impr:4, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital gold trading", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sky links capital gold trading", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"sca regulated forex broker uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"SCA regulated broker", match:"Exact", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+  {kw:"multi asset trading uae", match:"Phrase", impr:0, clicks:0, ctr:0.0000, cost:0.00, cpc:0.00, conv:0, convRate:0.0000, costConv:0.00},
+];
+
+let matchFilter = 'all', clickFilter = 'all', searchText = '', sortField = 'impr', sortDir = -1;
+
+function sortBy(field) {
+  if (sortField === field) sortDir *= -1;
+  else { sortField = field; sortDir = field === 'kw' || field === 'match' ? 1 : -1; }
+  render();
+}
+
+function ctrClass(v) {
+  if (v >= 0.15) return 'ctr-high';
+  if (v >= 0.05) return 'ctr-mid';
+  return 'ctr-low';
+}
+
+function renderCards() {
+  const totalImpr = keywords.reduce((a,k)=>a+k.impr,0);
+  const totalClicks = keywords.reduce((a,k)=>a+k.clicks,0);
+  const totalCost = keywords.reduce((a,k)=>a+k.cost,0);
+  const totalConv = keywords.reduce((a,k)=>a+k.conv,0);
+  const ctr = (totalClicks/totalImpr*100).toFixed(2);
+  const cpc = (totalCost/totalClicks).toFixed(2);
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="card"><div class="card-label">Total Impressions</div><div class="card-value">${totalImpr.toLocaleString()}</div><div class="card-sub">Across ${keywords.length} keywords</div></div>
+    <div class="card"><div class="card-label">Total Clicks</div><div class="card-value">${totalClicks.toLocaleString()}</div><div class="card-sub">All keywords</div></div>
+    <div class="card"><div class="card-label">CTR</div><div class="card-value">${ctr}%</div><div class="card-sub">Blended average</div></div>
+    <div class="card"><div class="card-label">Avg. CPC</div><div class="card-value">$${cpc}</div><div class="card-sub">Cost per click</div></div>
+    <div class="card"><div class="card-label">Total Cost</div><div class="card-value">$${totalCost.toFixed(2)}</div><div class="card-sub">June spend</div></div>
+    <div class="card"><div class="card-label">Conversions</div><div class="card-value" style="color:#1e7e34;">${totalConv}</div><div class="card-sub">From search clicks</div></div>
+  `;
+}
+
+function render() {
+  matchFilter = document.getElementById('matchFilter').value;
+  clickFilter = document.getElementById('clickFilter').value;
+  searchText = document.getElementById('searchBox').value.toLowerCase();
+
+  let rows = keywords.filter(k => {
+    if (matchFilter !== 'all' && k.match !== matchFilter) return false;
+    if (clickFilter === 'active' && k.cost === 0) return false;
+    if (clickFilter === 'zero' && k.cost > 0) return false;
+    if (clickFilter === 'conv' && k.conv === 0) return false;
+    if (searchText && !k.kw.toLowerCase().includes(searchText)) return false;
+    return true;
+  });
+
+  rows.sort((a,b) => {
+    let av = a[sortField], bv = b[sortField];
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
+  });
+
+  const maxCost = Math.max(...keywords.map(k=>k.cost));
+  const body = document.getElementById('kw-body');
+  body.innerHTML = rows.map(k => {
+    const barW = maxCost > 0 ? (k.cost/maxCost*100).toFixed(1) : 0;
+    const barColor = k.cost > 80 ? '#1a3c5e' : k.cost > 30 ? '#378add' : '#85b7eb';
+    const convCell = k.conv > 0 ? `<span style="color:#1e7e34;font-weight:bold;">${k.conv}</span>` : '—';
+    const convRateCell = k.convRate > 0 ? `<span style="color:#1e7e34;">${(k.convRate*100).toFixed(2)}%</span>` : '—';
+    const costConvCell = k.costConv > 0 ? `$${k.costConv.toFixed(2)}` : '—';
+    return `<tr>
+      <td style="font-weight:${k.cost>0?'bold':'normal'}; color:${k.cost>0?'#222':'#999'};">${k.kw}</td>
+      <td><span class="badge ${k.match==='Exact'?'badge-exact':'badge-phrase'}">${k.match}</span></td>
+      <td>${k.impr>0?k.impr.toLocaleString():'—'}</td>
+      <td style="font-weight:${k.clicks>0?'bold':'normal'};color:${k.clicks>0?'#1e7e34':'#aaa'}">${k.clicks>0?k.clicks:'—'}</td>
+      <td class="${ctrClass(k.ctr)}">${k.ctr>0?(k.ctr*100).toFixed(1)+'%':'—'}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill" style="width:${barW}%;background:${barColor};"></div></div>
+          <span class="bar-val">${k.cost>0?'$'+k.cost.toFixed(2):'—'}</span>
+        </div>
+      </td>
+      <td>${k.clicks>0?'$'+k.cpc.toFixed(2):'—'}</td>
+      <td>${convRateCell}</td>
+      <td>${convCell}</td>
+      <td>${costConvCell}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('footer-note').textContent = `Showing ${rows.length} of ${keywords.length} keywords`;
+}
+
+window.addEventListener('load', () => {
+  renderCards();
+  render();
+});
+</script>
+</body>
+</html>
